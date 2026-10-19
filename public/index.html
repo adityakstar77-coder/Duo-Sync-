@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DuoSync — Shared To-Do & Daily Calendar for Two</title>
+  <meta name="description" content="Real-time collaborative to-do list and daily calendar planner for two people across different locations and Wi-Fi networks.">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="theme-light">
+  <!-- Audio for Task Completion & High-five (Synthesized Web Audio API used) -->
+
+  <!-- Top App Bar -->
+  <header class="top-nav">
+    <div class="nav-brand">
+      <span class="brand-icon">✨</span>
+      <div class="brand-text">
+        <h1 class="brand-title">DuoSync</h1>
+        <span class="brand-subtitle">Together Planner</span>
+      </div>
+    </div>
+
+    <!-- Active Room & Partner Status Pill -->
+    <div class="partner-status-pill" id="partnerStatusPill" title="Connection status with partner">
+      <span class="status-dot offline" id="statusDot"></span>
+      <span class="status-text" id="statusText">Connecting...</span>
+      <span class="partner-avatar-small" id="partnerAvatarSmall">🐼</span>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="nav-actions">
+      <!-- PWA Install Button -->
+      <button class="icon-btn pwa-install-btn hidden" id="installPwaBtn" title="Install DuoSync App to your device">
+        <span>📲</span>
+        <span class="hide-mobile">Install</span>
+      </button>
+
+      <!-- Web Notifications Button -->
+      <button class="icon-btn notify-btn" id="notificationToggleBtn" title="Toggle browser push notifications">
+        <span id="notifyIcon">🔔</span>
+      </button>
+
+      <!-- High-five Cheer Button -->
+      <button class="icon-btn cheer-btn" id="cheerBtn" title="Send a high-five cheer!">
+        <span>🙌</span>
+        <span class="btn-badge" id="cheerCount">Cheer</span>
+      </button>
+
+      <!-- Share / Invite Button -->
+      <button class="icon-btn share-btn" id="shareBtn" title="Share with your partner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        <span class="hide-mobile">Connect</span>
+      </button>
+
+      <!-- Profile & Settings Button -->
+      <button class="icon-btn" id="settingsBtn" title="Profile and Space Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+
+      <!-- Theme Toggle -->
+      <button class="icon-btn" id="themeToggleBtn" title="Toggle dark/light mode">
+        <span id="themeIcon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-layout">
+    <!-- Left / Top Navigation Tabs -->
+    <nav class="main-tabs">
+      <button class="tab-btn active" data-tab="todos">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span>To-Do List</span>
+        <span class="tab-counter" id="activeTodoCount">0</span>
+      </button>
+
+      <button class="tab-btn" data-tab="calendar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Daily Calendar</span>
+        <span class="tab-counter streak-badge" id="streakBadge" title="Daily completion streak">🔥 0d</span>
+      </button>
+
+      <button class="tab-btn" data-tab="notes">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>Shared Scratchpad</span>
+      </button>
+
+      <button class="tab-btn" data-tab="chat" id="chatTabBtn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>Duo Chat</span>
+        <span class="tab-counter unread-badge hidden" id="unreadChatBadge">0</span>
+      </button>
+
+      <button class="tab-btn" data-tab="activity">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>Activity Feed</span>
+      </button>
+    </nav>
+
+    <!-- User Identity Selector Bar -->
+    <div class="user-identity-bar">
+      <span class="identity-label">Posting as:</span>
+      <div class="user-toggle-group">
+        <button class="user-toggle-pill" id="user1SelectBtn">
+          <span class="user-avatar" id="navUser1Avatar">🦊</span>
+          <span class="user-name" id="navUser1Name">Partner 1</span>
+          <span class="pill-status-tag hidden" id="navUser1StatusTag"></span>
+        </button>
+        <button class="user-toggle-pill" id="user2SelectBtn">
+          <span class="user-avatar" id="navUser2Avatar">🐼</span>
+          <span class="user-name" id="navUser2Name">Partner 2</span>
+          <span class="pill-status-tag hidden" id="navUser2StatusTag"></span>
+        </button>
+      </div>
+      <div class="room-indicator">
+        <span>Room:</span>
+        <strong id="currentRoomDisplay">default</strong>
+      </div>
+    </div>
+
+    <!-- Live Partner Duo Status Bar -->
+    <div class="partner-status-bar" id="partnerStatusBar">
+      <div class="partner-status-col" id="statusColUser1">
+        <div class="status-col-identity">
+          <span class="status-col-avatar" id="statusColAvatar1">🦊</span>
+          <span class="status-col-name" id="statusColName1">Partner 1</span>
+        </div>
+        <div class="status-display-bubble" id="statusBubble1" title="Click to update status for Partner 1">
+          <span class="status-badge-dot"></span>
+          <span class="status-bubble-text" id="statusText1">Free / Available</span>
+          <button type="button" class="status-edit-mini-btn" id="editStatusBtn1" title="Change status">✏️</button>
+        </div>
+      </div>
+
+      <div class="status-bar-divider"></div>
+
+      <div class="partner-status-col" id="statusColUser2">
+        <div class="status-col-identity">
+          <span class="status-col-avatar" id="statusColAvatar2">🐼</span>
+          <span class="status-col-name" id="statusColName2">Partner 2</span>
+        </div>
+        <div class="status-display-bubble" id="statusBubble2" title="Click to update status for Partner 2">
+          <span class="status-badge-dot"></span>
+          <span class="status-bubble-text" id="statusText2">Free / Available</span>
+          <button type="button" class="status-edit-mini-btn" id="editStatusBtn2" title="Change status">✏️</button>
+        </div>
+      </div>
+
+      <button type="button" class="quick-set-status-action-btn" id="openStatusModalBtn" title="Set what you are doing right now (studying, bathing, timepass, waiting...)">
+        <span class="status-btn-icon">💭</span>
+        <span class="status-btn-label">Set My Status</span>
+      </button>
+    </div>
+
+    <!-- ==================== TAB 1: TO-DO LIST ==================== -->
+    <section class="tab-content active" id="tab-todos">
+      <!-- Quick Add Section -->
+      <div class="task-add-card">
+        <form id="addTaskForm" class="add-task-form">
+          <div class="add-task-input-row">
+            <span class="add-icon">✏️</span>
+            <input type="text" id="taskTitleInput" placeholder="What needs to be done? Let's decide together..." required autocomplete="off">
+            <button type="submit" class="primary-btn add-btn">
+              <span>Add Task</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
+
+          <!-- Extended Task Options Accordion / Row -->
+          <div class="task-meta-row">
+            <!-- Assignee Picker -->
+            <div class="meta-item">
+              <label for="taskAssignee">👤 For:</label>
+              <select id="taskAssignee" class="meta-select">
+                <option value="both">👥 Both of Us</option>
+                <option value="user1" id="assigneeOptionUser1">🦊 Partner 1</option>
+                <option value="user2" id="assigneeOptionUser2">🐼 Partner 2</option>
+              </select>
+            </div>
+
+            <!-- Due Date Picker -->
+            <div class="meta-item">
+              <label for="taskDueDate">📅 Date:</label>
+              <input type="date" id="taskDueDate" class="meta-input-date">
+            </div>
+
+            <!-- Category Picker -->
+            <div class="meta-item">
+              <label for="taskCategory">🏷️ Tag:</label>
+              <select id="taskCategory" class="meta-select">
+                <option value="General">📝 General</option>
+                <option value="Home & Groceries">🛒 Home & Groceries</option>
+                <option value="Work / Study">💼 Work / Study</option>
+                <option value="Date & Fun">✨ Date & Fun</option>
+                <option value="Health & Habits">💪 Health & Habits</option>
+              </select>
+            </div>
+
+            <!-- Priority Picker -->
+            <div class="meta-item">
+              <label for="taskPriority">⚡ Priority:</label>
+              <select id="taskPriority" class="meta-select">
+                <option value="normal">Normal</option>
+                <option value="high">High 🔥</option>
+                <option value="urgent">Urgent 🚨</option>
+                <option value="low">Low 💤</option>
+              </select>
+            </div>
+
+            <!-- Recurrence Picker -->
+            <div class="meta-item">
+              <label for="taskRecurring">🔁 Repeat:</label>
+              <select id="taskRecurring" class="meta-select">
+                <option value="none">One-time</option>
+                <option value="daily">Daily 🔁</option>
+                <option value="weekly">Weekly 📅</option>
+                <option value="monthly">Monthly 🗓️</option>
+              </select>
+            </div>
+
+            <!-- Optional details toggle -->
+            <button type="button" class="text-btn toggle-notes-btn" id="toggleNotesBtn">+ Notes / Checklist</button>
+          </div>
+
+          <!-- Collapsible Notes & Subtasks Input -->
+          <div class="notes-expandable-box hidden" id="notesExpandable">
+            <textarea id="taskNotesInput" placeholder="Add extra details, grocery list items, links, or instructions..." rows="2"></textarea>
+          </div>
+        </form>
+      </div>
+
+      <!-- Filters & Categories Toolbar -->
+      <div class="toolbar-card">
+        <div class="filter-pills-row">
+          <button class="filter-pill active" data-filter="all">All (<span id="filterAllCount">0</span>)</button>
+          <button class="filter-pill" data-filter="today">Today & Due (<span id="filterTodayCount">0</span>)</button>
+          <button class="filter-pill" data-filter="past">📜 Past Dates (<span id="filterPastCount">0</span>)</button>
+          <button class="filter-pill" data-filter="groceries">🛒 Groceries (<span id="filterGroceriesCount">0</span>)</button>
+          <button class="filter-pill" data-filter="mine">Assigned to Me (<span id="filterMineCount">0</span>)</button>
+          <button class="filter-pill" data-filter="partner">Assigned to Partner (<span id="filterPartnerCount">0</span>)</button>
+          <button class="filter-pill" data-filter="both">Together (<span id="filterBothCount">0</span>)</button>
+        </div>
+
+        <div class="toolbar-subrow">
+          <!-- Search -->
+          <div class="search-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="taskSearchInput" placeholder="Search tasks...">
+          </div>
+
+          <!-- Date Filter -->
+          <div class="date-filter-box">
+            <input type="date" id="taskDateFilterInput" class="small-date-input" title="Filter tasks by specific date">
+            <button type="button" class="text-btn clear-date-filter hidden" id="clearDateFilterBtn" title="Show all dates">✕ All Dates</button>
+          </div>
+
+          <!-- Category Filter Dropdown -->
+          <select id="filterCategorySelect" class="small-select">
+            <option value="all">All Categories</option>
+          </select>
+
+          <!-- Toggle Completed -->
+          <label class="toggle-completed-label">
+            <input type="checkbox" id="hideCompletedCheck">
+            <span>Hide Completed</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Task Lists Sections -->
+      <div class="tasks-container">
+        <!-- Active Tasks -->
+        <div class="tasks-group">
+          <div class="group-header">
+            <h3>To Do</h3>
+            <span class="group-count" id="activeTasksHeaderCount">0 tasks</span>
+          </div>
+          <div class="task-list" id="activeTasksList">
+            <!-- Dynamic task items inserted here -->
+            <div class="empty-state" id="tasksEmptyState">
+              <span class="empty-icon">🎈</span>
+              <p>Nothing on your to-do list yet!</p>
+              <small>Type a task above and press "Add Task" to start collaborating together.</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Completed Tasks -->
+        <div class="tasks-group completed-group" id="completedTasksGroup">
+          <div class="group-header">
+            <h3>Completed ✨</h3>
+            <span class="group-count" id="completedTasksHeaderCount">0 completed</span>
+            <button class="text-btn clear-completed-btn" id="clearCompletedBtn" title="Clear completed tasks">Clear All</button>
+          </div>
+          <div class="task-list" id="completedTasksList">
+            <!-- Completed items -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: DAILY CALENDAR ==================== -->
+    <section class="tab-content" id="tab-calendar">
+      <div class="calendar-layout">
+        <!-- Left: Month Grid & Daily Streak -->
+        <div class="calendar-card">
+          <!-- Month Header with navigation -->
+          <div class="cal-nav-header">
+            <div class="cal-title-wrap">
+              <h2 id="calendarMonthTitle">September 2026</h2>
+              <span class="cal-subtitle" id="calendarMonthStats">0 tasks scheduled</span>
+            </div>
+            <div class="cal-controls">
+              <button class="cal-btn" id="calPrevMonthBtn" title="Previous Month">‹</button>
+              <button class="cal-btn today-jump" id="calTodayBtn">Today</button>
+              <button class="cal-btn" id="calNextMonthBtn" title="Next Month">›</button>
+            </div>
+          </div>
+
+          <!-- Day of week headers -->
+          <div class="cal-weekdays">
+            <span>Sun</span>
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+          </div>
+
+          <!-- 35-42 Date Cells Grid -->
+          <div class="cal-grid" id="calendarDaysGrid">
+            <!-- Rendered dynamically by calendar.js -->
+          </div>
+
+          <!-- Streak & Shared Habit Summary -->
+          <div class="streak-banner">
+            <div class="streak-icon">🔥</div>
+            <div class="streak-info">
+              <div class="streak-header-row">
+                <h4 id="streakTitle">Daily Duo Streak: 0 Days</h4>
+                <span class="streak-milestone-tag" id="streakMilestoneTag">🌱 Daily Duo Starter</span>
+              </div>
+              <p id="streakDescription">Complete at least one task together every day to build your duo streak!</p>
+            </div>
+            <button class="primary-btn small-btn send-cheer-quick" id="sendCheerStreak" title="Send a spark to your partner">Send Spark ✨</button>
+          </div>
+        </div>
+
+        <!-- Right: Day Detail & Daily Check-in / Notes -->
+        <div class="day-detail-card" id="dayDetailPanel">
+          <!-- Day Quick Date Switcher Bar -->
+          <div class="day-quick-switcher">
+            <button type="button" class="day-nav-pill" id="dayNavPrevBtn" title="Previous Day">‹ Yesterday</button>
+            <button type="button" class="day-nav-pill active-pill" id="dayNavTodayBtn">⭐ Today</button>
+            <button type="button" class="day-nav-pill" id="dayNavNextBtn" title="Next Day">Tomorrow ›</button>
+            <input type="date" id="dayNavDatePicker" class="day-picker-input" title="Choose specific date">
+          </div>
+
+          <!-- Day Title & Relative Badge -->
+          <div class="day-detail-header">
+            <div>
+              <div class="day-title-row">
+                <span class="badge-pill" id="dayDetailRelative">Today</span>
+                <span class="day-completion-pill" id="dayCompletionPill">0% Done</span>
+              </div>
+              <h3 id="dayDetailFullDate">Thursday, September 24, 2026</h3>
+            </div>
+            <button class="primary-btn small-btn" id="addTaskForSelectedDayBtn">+ Quick Task</button>
+          </div>
+
+          <!-- Day Tasks Written & Done/Left Summary Bar -->
+          <div class="day-stats-bar">
+            <div class="day-stat-chip total">
+              <span class="stat-number" id="dayStatTotal">0</span>
+              <span class="stat-label">Tasks Written</span>
+            </div>
+            <div class="day-stat-chip done">
+              <span class="stat-number" id="dayStatDone">0</span>
+              <span class="stat-label">Completed</span>
+            </div>
+            <div class="day-stat-chip left">
+              <span class="stat-number" id="dayStatLeft">0</span>
+              <span class="stat-label">Left to Do</span>
+            </div>
+          </div>
+
+          <!-- Day Completion Progress Bar -->
+          <div class="day-progress-container" id="dayProgressContainer">
+            <div class="day-progress-info">
+              <span id="dayProgressLabel">0 of 0 tasks done (0 left)</span>
+              <span id="dayProgressCelebration" class="day-celebration-text"></span>
+            </div>
+            <div class="day-progress-bar-bg">
+              <div class="day-progress-bar-fill" id="dayProgressBarFill" style="width: 0%;"></div>
+            </div>
+          </div>
+
+          <!-- Inline Quick Add Task for Selected Day -->
+          <div class="day-inline-add-card hidden" id="dayInlineAddCard">
+            <form id="dayInlineAddForm" class="day-inline-add-form">
+              <div class="inline-add-row">
+                <input type="text" id="dayInlineTaskTitle" class="input-text" placeholder="Task title for this day..." required autocomplete="off">
+                <input type="time" id="dayInlineTaskTime" class="input-time" title="Scheduled due time (optional)">
+              </div>
+              <div class="inline-add-meta-row">
+                <select id="dayInlineTaskAssignee" class="meta-select">
+                  <option value="both">👥 Both of Us</option>
+                  <option value="user1" id="dayInlineAssigneeUser1">🦊 Partner 1</option>
+                  <option value="user2" id="dayInlineAssigneeUser2">🐼 Partner 2</option>
+                </select>
+                <select id="dayInlineTaskCategory" class="meta-select">
+                  <option value="General">📝 General</option>
+                  <option value="Home & Groceries">🛒 Home & Groceries</option>
+                  <option value="Work / Study">💼 Work / Study</option>
+                  <option value="Date & Fun">✨ Date & Fun</option>
+                  <option value="Health & Habits">💪 Health & Habits</option>
+                </select>
+                <button type="submit" class="primary-btn small-btn">Add to Day</button>
+                <button type="button" class="secondary-btn small-btn" id="cancelDayInlineAddBtn">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Tasks scheduled for this day -->
+          <div class="day-tasks-section">
+            <div class="section-title-row">
+              <h4>Scheduled Tasks (<span id="dayTasksCount">0</span>)</h4>
+              <small class="day-tasks-subtitle">Check off or nudge your partner</small>
+            </div>
+            <div class="day-tasks-list" id="dayTasksList">
+              <p class="empty-hint">No specific tasks scheduled for this day. Click "+ Quick Task" to add one!</p>
+            </div>
+          </div>
+
+          <!-- Daily Reflection & Notes for Both Users -->
+          <div class="daily-checkin-section">
+            <div class="section-title-row">
+              <div>
+                <h4>💬 Daily Check-in & Moods</h4>
+                <small class="checkin-subtitle" id="duoCheckinStatus">Share your thoughts & feelings for today</small>
+              </div>
+              <span class="status-saved" id="checkinSavedStatus">Auto-saved ✨</span>
+            </div>
+
+            <!-- User 1 Daily Note -->
+            <div class="checkin-box" id="user1CheckinBox">
+              <div class="checkin-header">
+                <div class="checkin-user-tag">
+                  <span class="user-avatar" id="checkinUser1Avatar">🦊</span>
+                  <strong id="checkinUser1Name">Partner 1's Day Note</strong>
+                  <span class="my-turn-badge hidden" id="user1TurnBadge">You</span>
+                </div>
+                <!-- 8 Mood buttons -->
+                <div class="mood-selector" data-user="user1">
+                  <span class="mood-btn" data-mood="😊" title="Happy">😊</span>
+                  <span class="mood-btn" data-mood="⚡" title="Energetic">⚡</span>
+                  <span class="mood-btn" data-mood="☕" title="Productive">☕</span>
+                  <span class="mood-btn" data-mood="❤️" title="Loving">❤️</span>
+                  <span class="mood-btn" data-mood="😴" title="Tired">😴</span>
+                  <span class="mood-btn" data-mood="🥺" title="Stressed">🥺</span>
+                  <span class="mood-btn" data-mood="🧘" title="Calm">🧘</span>
+                  <span class="mood-btn" data-mood="🎉" title="Excited">🎉</span>
+                </div>
+              </div>
+              <textarea id="user1DailyNote" class="checkin-textarea" placeholder="How was your day? What's your goal or highlight?" rows="2"></textarea>
+            </div>
+
+            <!-- User 2 Daily Note -->
+            <div class="checkin-box" id="user2CheckinBox">
+              <div class="checkin-header">
+                <div class="checkin-user-tag">
+                  <span class="user-avatar" id="checkinUser2Avatar">🐼</span>
+                  <strong id="checkinUser2Name">Partner 2's Day Note</strong>
+                  <span class="my-turn-badge hidden" id="user2TurnBadge">You</span>
+                </div>
+                <!-- 8 Mood buttons -->
+                <div class="mood-selector" data-user="user2">
+                  <span class="mood-btn" data-mood="😊" title="Happy">😊</span>
+                  <span class="mood-btn" data-mood="⚡" title="Energetic">⚡</span>
+                  <span class="mood-btn" data-mood="☕" title="Productive">☕</span>
+                  <span class="mood-btn" data-mood="❤️" title="Loving">❤️</span>
+                  <span class="mood-btn" data-mood="😴" title="Tired">😴</span>
+                  <span class="mood-btn" data-mood="🥺" title="Stressed">🥺</span>
+                  <span class="mood-btn" data-mood="🧘" title="Calm">🧘</span>
+                  <span class="mood-btn" data-mood="🎉" title="Excited">🎉</span>
+                </div>
+              </div>
+              <textarea id="user2DailyNote" class="checkin-textarea" placeholder="How was your day? What's your goal or highlight?" rows="2"></textarea>
+            </div>
+
+            <!-- Shared Thought / Gratitude of the Day with Prompt Shuffler -->
+            <div class="shared-reflection-box">
+              <div class="reflection-label-row">
+                <label for="sharedDailyReflection" id="dailyPromptLabel">🌟 Prompt of the Day: What made you smile today?</label>
+                <button type="button" class="text-btn shuffle-prompt-btn" id="shufflePromptBtn" title="Shuffle prompt question">🎲 Shuffle Prompt</button>
+              </div>
+              <textarea id="sharedDailyReflection" class="checkin-textarea" placeholder="Something you both loved or want to remember about today..." rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: SHARED SCRATCHPAD ==================== -->
+    <section class="tab-content" id="tab-notes">
+      <div class="scratchpad-card">
+        <div class="scratchpad-header">
+          <div>
+            <h2>📝 Shared Scratchpad</h2>
+            <p>Freeform collaborative board for grocery lists, movie ideas, links, or quick reminders.</p>
+          </div>
+          <div class="scratchpad-status" id="scratchpadStatus">Synced with partner ☁️</div>
+        </div>
+        <textarea id="scratchpadArea" class="scratchpad-textarea" placeholder="Write anything here... Both users see this live!
+- Idea 1
+- Idea 2
+- Grocery items or quick notes..."></textarea>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: DUO CHAT ROOM ==================== -->
+    <section class="tab-content" id="tab-chat">
+      <div class="chat-card modernized-chat">
+        <!-- Chat Header -->
+        <div class="chat-header">
+          <div class="chat-header-info">
+            <div class="chat-partner-avatar-wrapper">
+              <div class="chat-partner-avatar" id="chatPartnerAvatar">🐼</div>
+              <span class="chat-online-badge offline" id="chatPartnerOnlineBadge"></span>
+            </div>
+            <div class="chat-header-meta">
+              <div class="chat-partner-name-row">
+                <h3 id="chatPartnerName">Partner</h3>
+                <span class="chat-live-pill" id="chatLivePill">
+                  <span class="status-dot offline" id="chatPartnerStatusDot"></span>
+                  <span class="chat-partner-status" id="chatPartnerStatusText">offline</span>
+                </span>
+              </div>
+              <p class="chat-subtitle" id="chatHeaderSubtitle">Private, instant & real-time between both of you</p>
+            </div>
+          </div>
+          <div class="chat-header-actions">
+            <button type="button" class="secondary-btn small-btn chat-love-ping-btn" id="chatQuickLoveBtn" title="Send a fist bump to your friend!">
+              <span>👊</span> <span class="action-label">Fist Bump</span>
+            </button>
+            <button type="button" class="secondary-btn small-btn chat-sound-toggle-btn" id="chatSoundToggleBtn" title="Chat notification sound is enabled. Click to test or toggle!">
+              <span id="chatSoundIcon">🔊</span> <span class="action-label">Sound On</span>
+            </button>
+            <button type="button" class="secondary-btn small-btn chat-clear-btn" id="clearChatBtn" title="Clear chat messages">
+              <span>🗑️</span> <span class="action-label">Clear</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chat Messages Viewport -->
+        <div class="chat-messages-container" id="chatMessagesContainer">
+          <div class="chat-date-separator">
+            <span>✨ Live Duo Messenger</span>
+          </div>
+          <div class="chat-messages-list" id="chatMessagesList">
+            <!-- Messages inserted dynamically -->
+          </div>
+
+          <!-- Real-Time Typing Bubble (Hidden by default until partner types) -->
+          <div class="chat-typing-indicator hidden" id="chatTypingIndicator">
+            <span class="typing-avatar" id="typingPartnerAvatar">🐼</span>
+            <div class="typing-bubble">
+              <span class="typing-dots">
+                <span></span><span></span><span></span>
+              </span>
+              <span class="typing-text" id="typingPartnerText">typing...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modern Quick Replies & Emojis Bar (Friend Friendly) -->
+        <div class="chat-quick-bar">
+          <div class="quick-chips-scroll">
+            <button type="button" class="quick-phrase-chip" data-phrase="Yo! What's up? 👋">👋 What's up?</button>
+            <button type="button" class="quick-phrase-chip" data-phrase="On my way! 🏃">🏃 On my way</button>
+            <button type="button" class="quick-phrase-chip" data-phrase="Did the task! ✓">✓ Did the task</button>
+            <button type="button" class="quick-phrase-chip" data-phrase="Free now? 📞">📞 Call?</button>
+            <button type="button" class="quick-phrase-chip" data-phrase="Let's grind! 🔥">🔥 Let's grind</button>
+            <button type="button" class="quick-phrase-chip" data-phrase="GG! 🙌">🙌 GG!</button>
+            <span class="quick-chip-divider"></span>
+            <button type="button" class="emoji-chip" data-emoji="👊" title="Fist Bump">👊</button>
+            <button type="button" class="emoji-chip" data-emoji="🔥" title="Lit">🔥</button>
+            <button type="button" class="emoji-chip" data-emoji="😂" title="Haha">😂</button>
+            <button type="button" class="emoji-chip" data-emoji="⚡" title="Power">⚡</button>
+            <button type="button" class="emoji-chip" data-emoji="👍" title="Thumbs Up">👍</button>
+            <button type="button" class="emoji-chip" data-emoji="🍕" title="Pizza">🍕</button>
+            <button type="button" class="emoji-chip" data-emoji="☕" title="Coffee">☕</button>
+            <button type="button" class="emoji-chip" data-emoji="🙌" title="High Five">🙌</button>
+            <button type="button" class="emoji-chip" data-emoji="✨" title="Sparkle">✨</button>
+          </div>
+        </div>
+
+        <!-- Modern Pill Chat Input Form -->
+        <form id="chatForm" class="chat-input-form modern-input-form">
+          <button type="button" class="chat-emoji-drawer-btn" id="chatEmojiDrawerBtn" title="Quick Emojis">
+            <span>😊</span>
+          </button>
+          <div class="chat-input-wrapper">
+            <input type="text" id="chatTextInput" class="chat-text-input" placeholder="Type a message to your friend..." autocomplete="off" maxlength="1000">
+          </div>
+          <button type="submit" class="primary-btn chat-send-btn" id="chatSendBtn" title="Send Message">
+            <span class="send-label">Send</span>
+            <svg class="send-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 5: ACTIVITY FEED ==================== -->
+    <section class="tab-content" id="tab-activity">
+      <div class="activity-card">
+        <div class="activity-header">
+          <h2>⚡ Activity & Cheers Feed</h2>
+          <p>See real-time actions, completions, cheers, and updates between both of you.</p>
+        </div>
+        <div class="activity-timeline" id="activityTimeline">
+          <!-- Inserted dynamically -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- Share & Connect Modal (Essential for Diff Wi-Fi / Diff Areas) -->
+  <div class="modal-overlay hidden" id="shareModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🔗 Connect with Your Partner</h3>
+        <button class="modal-close-btn" id="closeShareModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-description">
+          Share this exact link with your partner. When they open it on their phone or laptop (even on a <strong>different Wi-Fi or mobile network</strong>), you will both sync in real-time!
+        </p>
+
+        <!-- Room Link Copy Box -->
+        <div class="copy-link-box">
+          <input type="text" id="shareLinkInput" readonly>
+          <button class="primary-btn" id="copyShareLinkBtn">
+            <span id="copyBtnText">Copy Link</span>
+          </button>
+        </div>
+
+        <!-- QR Code Canvas for Scanning with Phone Camera -->
+        <div class="qr-code-section">
+          <p>Or scan with your partner's phone camera:</p>
+          <div class="qr-wrapper" id="qrContainer">
+            <canvas id="qrCanvas" width="180" height="180"></canvas>
+          </div>
+        </div>
+
+        <!-- Connectivity Guide: Different Wi-Fi & Internet Networks -->
+        <div class="connection-tip-box">
+          <h4>🌐 Connecting Across Different Wi-Fi / Areas:</h4>
+          <ul>
+            <li><strong>Method 1 (Instant 1-Click Public Link):</strong> Run <code>share.bat</code> on your computer. It creates an instant secure public HTTPS link (e.g. <em>pinggy</em> or <em>tunnel</em>) that your partner can open anywhere on Earth!</li>
+            <li><strong>Method 2 (Cloud Relay):</strong> You can also deploy this free to Render, Railway, Glitch, or Vercel for 24/7 online access.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-btn" id="closeShareModalBtn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile & Space Settings Modal -->
+  <div class="modal-overlay hidden" id="settingsModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>⚙️ Partner Duo & Space Settings</h3>
+        <button class="modal-close-btn" id="closeSettingsModal">&times;</button>
+      </div>
+      <form id="settingsForm" class="modal-body">
+        <!-- Room ID / Code -->
+        <div class="form-group">
+          <label for="settingsRoomId">Shared Space / Room Code:</label>
+          <div class="room-input-row">
+            <input type="text" id="settingsRoomId" placeholder="e.g. together2026" required>
+            <button type="button" class="secondary-btn" id="switchRoomBtn">Switch Space</button>
+          </div>
+          <small>Anyone who enters this room code shares the same to-do list & calendar.</small>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Partner 1 Customization -->
+        <div class="form-group">
+          <label>🦊 Partner 1 Profile & Live Status:</label>
+          <div class="partner-config-row">
+            <input type="text" id="cfgUser1Name" placeholder="Name (e.g. Alex)" class="input-text">
+            <input type="text" id="cfgUser1Avatar" placeholder="Avatar (e.g. 🦊)" class="input-avatar" maxlength="4">
+            <input type="color" id="cfgUser1Color" value="#4f46e5" class="input-color" title="Theme color">
+          </div>
+          <div class="partner-status-input-row" style="margin-top: 6px;">
+            <input type="text" id="cfgUser1Status" placeholder="Status: 📚 Studying, 🚿 Bathing, 🎮 Timepass, ⏳ Waiting..." class="input-text" maxlength="60">
+          </div>
+        </div>
+
+        <!-- Partner 2 Customization -->
+        <div class="form-group">
+          <label>🐼 Partner 2 Profile & Live Status:</label>
+          <div class="partner-config-row">
+            <input type="text" id="cfgUser2Name" placeholder="Name (e.g. Sam)" class="input-text">
+            <input type="text" id="cfgUser2Avatar" placeholder="Avatar (e.g. 🐼)" class="input-avatar" maxlength="4">
+            <input type="color" id="cfgUser2Color" value="#ec4899" class="input-color" title="Theme color">
+          </div>
+          <div class="partner-status-input-row" style="margin-top: 6px;">
+            <input type="text" id="cfgUser2Status" placeholder="Status: 📚 Studying, 🚿 Bathing, 🎮 Timepass, ⏳ Waiting..." class="input-text" maxlength="60">
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Computer / Desktop Notifications -->
+        <div class="form-group notification-settings-group" id="notificationSettingsGroup">
+          <label>🔔 Desktop / Computer Notifications:</label>
+          <div class="toggle-setting-box highlight-setting-card">
+            <div class="toggle-setting-info">
+              <span class="toggle-setting-title">Partner Join Alert <span class="badge-new">NEW</span></span>
+              <p class="toggle-setting-desc">Get a notification on your computer when your friend/partner joins the group space.</p>
+              <small id="desktopNotifyStatus" class="toggle-setting-status">Status: Disabled</small>
+            </div>
+            <label class="switch-toggle" title="Enable/disable desktop join notifications">
+              <input type="checkbox" id="cfgNotifyPartnerJoin">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Room PIN Security Protection -->
+        <div class="form-group">
+          <label>🔒 Room Passcode / PIN Protection:</label>
+          <div class="pin-config-box">
+            <p class="pin-hint">Protect this room with a PIN code so only the two of you can enter and view tasks/notes.</p>
+            <div class="partner-config-row">
+              <input type="password" id="cfgCurrentPin" placeholder="Current PIN (if set)" class="input-text" maxlength="8">
+              <input type="password" id="cfgNewPin" placeholder="New PIN (leave blank to remove)" class="input-text" maxlength="8">
+              <button type="button" class="secondary-btn" id="savePinBtn">Save PIN</button>
+            </div>
+            <small id="pinStatusLabel" class="pin-status-text">Status: Checking...</small>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- 1-Click Backup & Export -->
+        <div class="form-group">
+          <label>💾 Data Backup & Export:</label>
+          <div class="export-btn-group">
+            <button type="button" class="secondary-btn" id="exportJsonBtn">📥 Full Backup (JSON)</button>
+            <button type="button" class="secondary-btn" id="exportMarkdownBtn">📄 Journal Summary (Markdown)</button>
+          </div>
+          <small>Download your tasks, memories, and scratchpad anytime for offline safekeeping.</small>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="secondary-btn" id="cancelSettingsBtn">Cancel</button>
+          <button type="submit" class="primary-btn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Task Edit Modal -->
+  <div class="modal-overlay hidden" id="taskEditModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>✏️ Edit Task</h3>
+        <button class="modal-close-btn" id="closeEditModal">&times;</button>
+      </div>
+      <form id="editTaskForm" class="modal-body">
+        <input type="hidden" id="editTaskId">
+        <div class="form-group">
+          <label for="editTaskTitle">Task Title:</label>
+          <input type="text" id="editTaskTitle" required class="input-text">
+        </div>
+        <div class="form-group">
+          <label for="editTaskNotes">Notes / Description:</label>
+          <textarea id="editTaskNotes" rows="3" class="input-text"></textarea>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="editTaskAssignee">Assignee:</label>
+            <select id="editTaskAssignee" class="meta-select">
+              <option value="both">👥 Both of Us</option>
+              <option value="user1" id="editAssigneeUser1">🦊 Partner 1</option>
+              <option value="user2" id="editAssigneeUser2">🐼 Partner 2</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editTaskDueDate">Due Date:</label>
+            <input type="date" id="editTaskDueDate" class="input-text">
+          </div>
+        </div>
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="editTaskCategory">Category:</label>
+            <select id="editTaskCategory" class="meta-select">
+              <option value="General">📝 General</option>
+              <option value="Home & Groceries">🛒 Home & Groceries</option>
+              <option value="Work / Study">💼 Work / Study</option>
+              <option value="Date & Fun">✨ Date & Fun</option>
+              <option value="Health & Habits">💪 Health & Habits</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="editTaskPriority">Priority:</label>
+            <select id="editTaskPriority" class="meta-select">
+              <option value="normal">Normal</option>
+              <option value="high">High 🔥</option>
+              <option value="urgent">Urgent 🚨</option>
+              <option value="low">Low 💤</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Recurrence in Edit Modal -->
+        <div class="form-group">
+          <label for="editTaskRecurring">🔁 Recurrence / Repeat:</label>
+          <select id="editTaskRecurring" class="meta-select">
+            <option value="none">One-time (No repeat)</option>
+            <option value="daily">Daily 🔁</option>
+            <option value="weekly">Weekly 📅</option>
+            <option value="monthly">Monthly 🗓️</option>
+          </select>
+        </div>
+
+        <!-- Subtasks in Edit Modal -->
+        <div class="form-group">
+          <label>Checklist Subtasks:</label>
+          <div id="editSubtasksList" class="subtasks-container"></div>
+          <div class="add-subtask-row">
+            <input type="text" id="newSubtaskInput" placeholder="+ Add a checklist item..." class="input-text">
+            <button type="button" class="secondary-btn small-btn" id="addSubtaskBtn">Add</button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="danger-btn" id="deleteTaskInModalBtn">Delete Task</button>
+          <button type="button" class="secondary-btn" id="cancelEditModalBtn">Cancel</button>
+          <button type="submit" class="primary-btn">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- PIN Lock Screen Modal (Blocks space when PIN is enabled) -->
+  <div class="modal-overlay hidden" id="pinLockModal">
+    <div class="modal-card lock-card">
+      <div class="lock-header">
+        <div class="lock-icon">🔒</div>
+        <h3>Protected Space</h3>
+        <p>This room (<strong id="lockRoomName">our-space</strong>) is protected with a PIN. Enter the passcode to access your shared planner.</p>
+      </div>
+      <form id="pinUnlockForm" class="lock-body">
+        <input type="password" id="pinUnlockInput" class="pin-input-field" placeholder="Enter PIN..." maxlength="8" autofocus autocomplete="off" required>
+        <p class="pin-error-msg hidden" id="pinErrorMsg">⚠️ Incorrect PIN. Please try again.</p>
+        <button type="submit" class="primary-btn lock-submit-btn">Unlock Space 🔓</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Floating Quick Chat Trigger Button -->
+  <button class="floating-chat-trigger" id="floatingChatBtn" title="Open Duo Chat">
+    <span class="float-icon">💬</span>
+    <span class="floating-badge hidden" id="floatingChatBadge">0</span>
+  </button>
+
+  <!-- Interactive Nudge Alert Banner (Prominent & Unmissable) -->
+  <div class="nudge-alert-banner hidden" id="nudgeAlertBanner">
+    <div class="nudge-alert-content">
+      <div class="nudge-alert-icon">🔔</div>
+      <div class="nudge-alert-text">
+        <strong id="nudgeAlertSender">Partner</strong>
+        <p id="nudgeAlertMessage">sent a gentle reminder for a task!</p>
+      </div>
+      <div class="nudge-alert-actions">
+        <button type="button" class="primary-btn small-btn" id="nudgeActionDoneBtn">✓ Mark Done</button>
+        <button type="button" class="secondary-btn small-btn" id="nudgeActionDismissBtn">Got It 👍</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Cheer Celebration Modal -->
+  <div class="modal-overlay hidden" id="cheerCelebrationModal">
+    <div class="modal-card cheer-celebration-card">
+      <div class="cheer-card-header">
+        <div class="cheer-giant-emoji" id="cheerModalEmoji">🎉</div>
+        <h3 id="cheerModalTitle">High-Five Cheer!</h3>
+        <p id="cheerModalDesc">Partner sent you a cheerful high-five!</p>
+      </div>
+      <div class="cheer-card-actions">
+        <button type="button" class="primary-btn cheer-reply-btn" id="cheerReplyBtn">High-Five Back! 🙌</button>
+        <button type="button" class="secondary-btn" id="cheerDismissBtn">Awesome ✨</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Partner Status Modal -->
+  <div class="modal-overlay hidden" id="statusModal">
+    <div class="modal-card status-modal-card">
+      <div class="modal-header">
+        <h3>💭 Update Live Status</h3>
+        <button class="modal-close-btn" id="closeStatusModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="status-modal-subtitle">Let your partner know what you're doing right now!</p>
+
+        <!-- Choose User -->
+        <div class="status-user-picker">
+          <label>Update status for:</label>
+          <div class="status-user-pills">
+            <button type="button" class="status-user-btn active" id="statusPickUser1">
+              <span id="statusPickAvatar1">🦊</span>
+              <span id="statusPickName1">Partner 1</span>
+            </button>
+            <button type="button" class="status-user-btn" id="statusPickUser2">
+              <span id="statusPickAvatar2">🐼</span>
+              <span id="statusPickName2">Partner 2</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="status-presets-section">
+          <label>Quick Presets (1-tap to set):</label>
+          <div class="status-chips-grid">
+            <button type="button" class="status-preset-chip" data-status="📚 Studying">📚 Studying</button>
+            <button type="button" class="status-preset-chip" data-status="🚿 Bathing">🚿 Bathing</button>
+            <button type="button" class="status-preset-chip" data-status="🎮 Timepass">🎮 Timepass</button>
+            <button type="button" class="status-preset-chip" data-status="⏳ Waiting">⏳ Waiting</button>
+            <button type="button" class="status-preset-chip" data-status="💼 Working">💼 Working</button>
+            <button type="button" class="status-preset-chip" data-status="🍽️ Eating">🍽️ Eating</button>
+            <button type="button" class="status-preset-chip" data-status="😴 Sleeping">😴 Sleeping</button>
+            <button type="button" class="status-preset-chip" data-status="🚗 Traveling">🚗 Traveling</button>
+            <button type="button" class="status-preset-chip" data-status="☕ Taking Break">☕ Taking Break</button>
+            <button type="button" class="status-preset-chip" data-status="🏋️ Workout">🏋️ Workout</button>
+            <button type="button" class="status-preset-chip" data-status="🎧 Chilling">🎧 Chilling</button>
+            <button type="button" class="status-preset-chip" data-status="🧹 Chores">🧹 Chores</button>
+          </div>
+        </div>
+
+        <!-- Custom Status Input Form -->
+        <form id="customStatusForm" class="custom-status-form">
+          <label for="customStatusInput">Or type your own custom status:</label>
+          <div class="custom-status-input-row">
+            <input type="text" id="customStatusInput" class="input-text" placeholder="e.g. studying physics, taking shower, waiting for food..." maxlength="60" autocomplete="off">
+          </div>
+          <div class="status-modal-actions">
+            <button type="button" class="secondary-btn" id="clearStatusBtn">Clear Status</button>
+            <button type="submit" class="primary-btn" id="saveStatusBtn">Save Status</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Floating Confetti & Cheer Overlay -->
+  <div class="cheer-overlay" id="cheerOverlay" pointer-events="none"></div>
+
+  <!-- Scripts -->
+  <script src="calendar.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
