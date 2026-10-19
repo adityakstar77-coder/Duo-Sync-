@@ -1,0 +1,23 @@
+{
+  "name": "duo-sync",
+  "version": "1.0.0",
+  "description": "Real-time collaborative to-do list and daily calendar planner for two users across different locations & Wi-Fi networks.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "agy": "agy-node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "keywords": [
+    "todo",
+    "calendar",
+    "collaboration",
+    "real-time",
+    "two-users",
+    "daily-planner"
+  ],
+  "author": "Antigravity Pair",
+  "license": "MIT"
+}
