@@ -1131,6 +1131,28 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // 16b. Clear or Delete Activity Log: DELETE /api/rooms/:roomId/activities or /api/rooms/:roomId/activities/:activityId
+      const activityDeleteMatch = pathname.match(/^\/api\/rooms\/([^/]+)\/activit(?:ies|y)(?:\/([^/]+))?$/);
+      if (activityDeleteMatch && req.method === 'DELETE') {
+        const roomId = decodeURIComponent(activityDeleteMatch[1]);
+        const activityId = activityDeleteMatch[2] ? decodeURIComponent(activityDeleteMatch[2]) : null;
+        const user = parsedUrl.searchParams.get('user') || 'Partner';
+        ensureRoom(roomId);
+
+        if (activityId) {
+          db.prepare('DELETE FROM activity_log WHERE room_id = ? AND id = ?').run(roomId, activityId);
+          broadcast(roomId, 'activity_deleted', { id: activityId, by: user });
+          res.writeHead(200);
+          res.end(JSON.stringify({ success: true, id: activityId }));
+        } else {
+          db.prepare('DELETE FROM activity_log WHERE room_id = ?').run(roomId);
+          broadcast(roomId, 'activity_cleared', { by: user });
+          res.writeHead(200);
+          res.end(JSON.stringify({ success: true, cleared_all: true }));
+        }
+        return;
+      }
+
       // 17. Partner Typing Indicator: POST /api/rooms/:roomId/typing
       const typingMatch = pathname.match(/^\/api\/rooms\/([^/]+)\/typing$/);
       if (typingMatch && req.method === 'POST') {

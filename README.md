@@ -33,6 +33,7 @@ Whether you are partners, best friends, roommates, or study buddies living in di
 ### 4. 🗒️ Shared Scratchpad & Activity Timeline
 - Freeform shared memo board for grocery lists, links, movie ideas, or quick thoughts.
 - Live activity timeline tracking recent edits, completions, and cheers.
+- **Activity Feed Controls**: Delete individual action items or 1-click **"Clear Feed"** with real-time zero-refresh synchronization across both users.
 
 ---
 

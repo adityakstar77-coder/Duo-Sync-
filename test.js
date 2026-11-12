@@ -376,8 +376,42 @@ async function runTests() {
   }
   console.log('  ✅ Partner 1 status successfully cleared');
 
+  // 20. Test Delete Activity Feed & Single Activity Item
+  console.log('[20/20] Testing Delete Activity Item & Clear Activity Feed...');
+  const stateWithActivities = await request(`/api/rooms/${roomId}/state`);
+  if (!stateWithActivities.body.activities || stateWithActivities.body.activities.length === 0) {
+    throw new Error('Expected activity items to exist before test');
+  }
+  const activityCountBefore = stateWithActivities.body.activities.length;
+  const targetActivity = stateWithActivities.body.activities[0];
+
+  // Test single item deletion
+  const delSingleRes = await request(`/api/rooms/${roomId}/activities/${targetActivity.id}`, 'DELETE');
+  if (delSingleRes.status !== 200 || !delSingleRes.body.success) {
+    throw new Error('Failed to delete single activity item');
+  }
+  const stateAfterSingleDel = await request(`/api/rooms/${roomId}/state`);
+  if (stateAfterSingleDel.body.activities.some(a => a.id === targetActivity.id)) {
+    throw new Error('Deleted activity item still present in state');
+  }
+  if (stateAfterSingleDel.body.activities.length !== activityCountBefore - 1) {
+    throw new Error('Activity count did not decrease by 1');
+  }
+  console.log('  ✅ Single activity item successfully deleted and verified');
+
+  // Test clear all activities
+  const clearAllRes = await request(`/api/rooms/${roomId}/activities`, 'DELETE');
+  if (clearAllRes.status !== 200 || !clearAllRes.body.success) {
+    throw new Error('Failed to clear activity feed');
+  }
+  const stateAfterClearAll = await request(`/api/rooms/${roomId}/state`);
+  if (stateAfterClearAll.body.activities.length !== 0) {
+    throw new Error('Activity feed not empty after clearing all');
+  }
+  console.log('  ✅ Entire activity feed cleared and verified empty (0 items)');
+
   console.log('\n======================================================');
-  console.log('🎉 ALL 19 INTEGRATION & RESILIENCE TESTS PASSED 100%!');
+  console.log('🎉 ALL 20 INTEGRATION & RESILIENCE TESTS PASSED 100%!');
   console.log('======================================================');
   if (serverInstance && typeof serverInstance.close === 'function') serverInstance.close();
   process.exit(0);
